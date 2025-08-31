@@ -56,6 +56,13 @@ era_expenses_tracker
    flutter run
    ```
 
+6. Update and push changes
+   ```
+   git add .
+   git commit -m "remark"
+   git push
+   ```
+
 ## View Changes
 If you're changing initial data, adding a new expense logic to _addExpense, or modifying anything in main.dart (like theme colors), do a Hot Restart (the circular arrow in VS Code debug toolbar, or R in the terminal).
 
@@ -63,6 +70,7 @@ If you're changing initial data, adding a new expense logic to _addExpense, or m
 ## Usage
 
 - Launch the app to view the home screen.
+- user Eraine and 1234@Abcd for login
 - Use the "Add Expense" button to input new expenses.
 - View the list of expenses and their details.
 - Use the chart to visualize your spending habits.
