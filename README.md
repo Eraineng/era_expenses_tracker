@@ -16,10 +16,12 @@ era_expenses_tracker
 ├── lib
 │   ├── main.dart                # Entry point of the application
 │   ├── models
+│   │   └── account.dart         # Model apply different wallet
 │   │   └── expense.dart         # Model representing an expense item
 │   ├── screens
 │   │   ├── home_screen.dart     # Main interface displaying expenses
 │   │   └── add_expense_screen.dart # Form for adding new expenses
+│   │   └── login_screen.dart # Main interface for Login
 │   ├── widgets
 │   │   ├── expense_list.dart     # Widget for displaying a list of expenses
 │   │   ├── expense_item.dart      # Widget for a single expense item
@@ -32,7 +34,7 @@ era_expenses_tracker
 
 1. Clone the repository:
    ```
-   git clone <repository-url>
+   git clone https://github.com/Eraineng/era_expenses_tracker.git
    ```
 2. Navigate to the project directory:
    ```
