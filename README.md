@@ -75,8 +75,13 @@ era_expenses_tracker
 If you're changing initial data, adding a new expense logic to _addExpense, or modifying anything in main.dart (like theme colors), do a Hot Restart (the circular arrow in VS Code debug toolbar, or R in the terminal).
 
 in short
-r for refresh
-R for reload
+Flutter run key commands.
+r Hot reload.
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
 
 ## Usage
 
