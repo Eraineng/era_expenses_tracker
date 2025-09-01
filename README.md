@@ -63,9 +63,20 @@ era_expenses_tracker
    git push
    ```
 
+## Run app in android emulator
+1. Open android studio
+2. Click on "More Actions"
+3. Click on Virtual Device Manager
+4. Click Play button on any target android virtual device
+5. In VSCode's terminal locate to project folder
+6. Insert command "flutter run" and press Enter
+
 ## View Changes
 If you're changing initial data, adding a new expense logic to _addExpense, or modifying anything in main.dart (like theme colors), do a Hot Restart (the circular arrow in VS Code debug toolbar, or R in the terminal).
 
+in short
+r for refresh
+R for reload
 
 ## Usage
 
@@ -78,3 +89,5 @@ If you're changing initial data, adding a new expense logic to _addExpense, or m
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
+
+
