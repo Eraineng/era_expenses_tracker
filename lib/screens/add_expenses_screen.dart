@@ -1,10 +1,15 @@
+// lib/screens/add_expense_screen.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+
 import 'package:era_expenses_tracker/models/expense.dart';
+import 'package:era_expenses_tracker/models/account.dart';
+import 'package:era_expenses_tracker/providers/money_manager.dart';
+import 'package:era_expenses_tracker/screens/accounts_screen.dart';
 
 class AddExpenseScreen extends StatefulWidget {
-  const AddExpenseScreen({super.key, required this.onAddExpense});
-
-  final void Function(Expense expense) onAddExpense;
+  const AddExpenseScreen({super.key});
 
   @override
   State<AddExpenseScreen> createState() {
@@ -13,15 +18,37 @@ class AddExpenseScreen extends StatefulWidget {
 }
 
 class _AddExpenseScreenState extends State<AddExpenseScreen> {
-  // Controllers for text input fields
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
 
-  // Variables to hold selected date and category
-  DateTime? _selectedDate;
-  Category _selectedCategory = Category.leisure; // Default category
+  DateTime? _selectedDate = DateTime.now();
+  Category _selectedCategory = Category.food;
 
-  // Dispose controllers when the widget is removed to prevent memory leaks
+  // Make _selectedAccount nullable and initialize it in initState
+  Account? _selectedAccount;
+
+  @override
+  void initState() {
+    super.initState();
+    // --- FIX START: Initialize _selectedAccount directly in initState ---
+    // Access the provider here with listen: false because we only need
+    // to read its current state for initialization, not listen for updates.
+    final moneyManager = Provider.of<MoneyManager>(context, listen: false);
+    final accounts = moneyManager.accounts;
+
+    if (accounts.isNotEmpty) {
+      _selectedAccount = accounts.first;
+    } else {
+      // This state handles if no accounts are available.
+      // The SnackBar here is slightly redundant with the main 'No accounts found' widget
+      // but kept for consistency with previous code.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please add an account first!')),
+      );
+    }
+    // --- FIX END ---
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -29,14 +56,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     super.dispose();
   }
 
-  // Function to show the date picker
   void _presentDatePicker() async {
     final now = DateTime.now();
     final firstDate = DateTime(now.year - 1, now.month, now.day);
 
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: now,
+      initialDate: _selectedDate ?? now,
       firstDate: firstDate,
       lastDate: now,
     );
@@ -46,21 +72,20 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     });
   }
 
-  // Function to handle form submission
   void _submitExpenseData() {
     final enteredAmount = double.tryParse(_amountController.text);
     final amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
 
     if (_titleController.text.trim().isEmpty ||
         amountIsInvalid ||
-        _selectedDate == null) {
-      // Show an error dialog if validation fails
+        _selectedDate == null ||
+        _selectedAccount == null) { // Ensure account is selected before submission
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('Invalid Input'),
           content: const Text(
-            'Please make sure a valid title, amount, date, and category was '
+            'Please make sure a valid title, amount, date, category, and account was '
             'entered.',
           ),
           actions: [
@@ -76,24 +101,55 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       return;
     }
 
-    // If valid, create a new expense and pass it to the parent widget
-    widget.onAddExpense(
+    Provider.of<MoneyManager>(context, listen: false).addExpense(
       Expense(
         title: _titleController.text,
         amount: enteredAmount,
         date: _selectedDate!,
         category: _selectedCategory,
+        accountId: _selectedAccount!.id, // Now safely access .id
       ),
     );
 
-    // Close the bottom sheet after adding the expense
     Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get the keyboard's height to adjust layout
     final keyboardSpace = MediaQuery.of(context).viewInsets.bottom;
+    final availableAccounts = Provider.of<MoneyManager>(context).accounts;
+
+    // This block handles the case where no accounts are available.
+    // It will be displayed instead of the form.
+    if (availableAccounts.isEmpty) {
+      return SizedBox(
+        height: double.infinity,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 48, 16, keyboardSpace + 16),
+            child: Column(
+              children: [
+                Text(
+                  'No accounts found! Please add an account before adding expenses.',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.account_balance_wallet),
+                  label: const Text('Go to Accounts'),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (ctx) => const AccountsScreen()));
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return LayoutBuilder(builder: (ctx, constraints) {
       final width = constraints.maxWidth;
@@ -105,7 +161,6 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             padding: EdgeInsets.fromLTRB(16, 48, 16, keyboardSpace + 16),
             child: Column(
               children: [
-                // Title input field
                 if (width >= 600)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,7 +198,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 if (width >= 600)
                   Row(
                     children: [
-                      DropdownButton(
+                      DropdownButton<Category>( // Ensure type is Category
                         value: _selectedCategory,
                         items: Category.values
                             .map(
@@ -218,62 +273,65 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     ],
                   ),
                 const SizedBox(height: 16),
-                if (width >= 600)
-                  Row(
-                    children: [
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context); // Close the bottom sheet
-                        },
-                        child: const Text('Cancel'),
-                      ),
-                      ElevatedButton(
-                        onPressed: _submitExpenseData,
-                        child: const Text('Save Expense'),
-                      ),
-                    ],
-                  )
-                else
-                  Row(
-                    children: [
-                      // Category dropdown
-                      DropdownButton(
-                        value: _selectedCategory,
-                        items: Category.values
-                            .map(
-                              (category) => DropdownMenuItem(
-                                value: category,
-                                child: Text(
-                                  category.name.toUpperCase(),
-                                ),
+                Row(
+                  children: [
+                    // --- Account Selection Dropdown ---
+                    // Now _selectedAccount is guaranteed to be non-null if availableAccounts is not empty
+                    DropdownButton<Account>(
+                      value: _selectedAccount,
+                      items: availableAccounts
+                          .map(
+                            (account) => DropdownMenuItem(
+                              value: account,
+                              child: Text(account.name),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) {
+                          return;
+                        }
+                        setState(() {
+                          _selectedAccount = value;
+                        });
+                      },
+                      hint: const Text('Select Account'),
+                    ),
+                    const SizedBox(width: 16),
+                    DropdownButton<Category>( // Ensure type is Category
+                      value: _selectedCategory,
+                      items: Category.values
+                          .map(
+                            (category) => DropdownMenuItem(
+                              value: category,
+                              child: Text(
+                                category.name.toUpperCase(),
                               ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value == null) {
-                            return;
-                          }
-                          setState(() {
-                            _selectedCategory = value;
-                          });
-                        },
-                      ),
-                      const Spacer(), // Pushes widgets to the ends of the row
-                      // Cancel button
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context); // Close the bottom sheet
-                        },
-                        child: const Text('Cancel'),
-                      ),
-                      // Save Expense button
-                      ElevatedButton(
-                        onPressed: _submitExpenseData,
-                        child: const Text('Save Expense'),
-                      ),
-                    ],
-                  ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) {
+                          return;
+                        }
+                        setState(() {
+                          _selectedCategory = value;
+                        });
+                      },
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: _submitExpenseData,
+                      child: const Text('Save Expense'),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

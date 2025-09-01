@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:era_expenses_tracker/models/account.dart'; // Import Account model
 
 // Generates unique IDs for our expenses
 const uuid = Uuid();
@@ -26,6 +27,7 @@ class Expense {
     required this.amount,
     required this.date,
     required this.category,
+    required this.accountId,
   }) : id = uuid.v4(); // Generate a unique ID when an expense is created
 
   final String id;
@@ -33,6 +35,7 @@ class Expense {
   final double amount;
   final DateTime date;
   final Category category;
+  final String accountId;
 
   // Getter to provide a nicely formatted date
   String get formattedDate {
